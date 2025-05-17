@@ -29,6 +29,9 @@ const Chess2DGame: React.FC = () => {
   const [lastMove, setLastMove] = useState<{from: string, to: string} | null>(null);
   const [showPromotionDialog, setShowPromotionDialog] = useState(false);
   const [pendingPromotion, setPendingPromotion] = useState<{from: string, to: string} | null>(null);
+  const [capturedPieces, setCapturedPieces] = useState<{white: string[], black: string[]}>(
+    {white: [], black: []}
+  );
 
   // Define piece images using chess.com URLs
   const PIECE_IMAGES: Record<string, string> = {
@@ -131,6 +134,24 @@ const Chess2DGame: React.FC = () => {
     return (piece.color === 'w' && toRank === '8') || (piece.color === 'b' && toRank === '1');
   };
 
+  // Update captured pieces list
+  const updateCapturedPieces = (move: any) => {
+    if (!move.captured) return;
+    
+    // Determine which player captured the piece
+    const capturedBy = move.color === 'w' ? 'white' : 'black';
+    const capturedPiece = move.captured;
+    
+    // Add to the appropriate list
+    setCapturedPieces(prev => {
+      if (capturedBy === 'white') {
+        return { ...prev, white: [...prev.white, capturedPiece] };
+      } else {
+        return { ...prev, black: [...prev.black, capturedPiece] };
+      }
+    });
+  };
+
   // Handle promotion piece selection
   const handlePromotionSelect = (promotionPiece: string) => {
     if (!pendingPromotion) return;
@@ -147,6 +168,7 @@ const Chess2DGame: React.FC = () => {
         // Play the appropriate sound
         if (move.captured) {
           playSuccess();
+          updateCapturedPieces(move);
         } else {
           playHit();
         }
@@ -197,6 +219,7 @@ const Chess2DGame: React.FC = () => {
           // Play the appropriate sound
           if (move.captured) {
             playSuccess();
+            updateCapturedPieces(move);
           } else {
             playHit();
           }
@@ -263,11 +286,32 @@ const Chess2DGame: React.FC = () => {
       setValidMoves([]);
       setMoveHistory([]);
       setLastMove(null);
+      setCapturedPieces({white: [], black: []});
       updateBoard();
       updateGameStatus();
     } catch (error) {
       console.error("Error resetting game:", error);
     }
+  };
+  
+  // Render captured pieces
+  const renderCapturedPieces = (color: 'white' | 'black') => {
+    const pieces = capturedPieces[color];
+    if (pieces.length === 0) return null;
+    
+    return (
+      <div className="flex flex-wrap gap-1 justify-center">
+        {pieces.map((piece, index) => (
+          <div key={`${color}-${piece}-${index}`} className="w-8 h-8">
+            <img 
+              src={PIECE_IMAGES[`${color === 'white' ? 'b' : 'w'}${piece.toUpperCase()}`]}
+              alt={`Captured ${piece}`}
+              className="w-full h-full object-contain"
+            />
+          </div>
+        ))}
+      </div>
+    );
   };
 
   // Flip the board
@@ -429,8 +473,18 @@ const Chess2DGame: React.FC = () => {
             <div className="text-lg font-bold">{gameStatus}</div>
           </div>
           
+          {/* Captured pieces by black (shown at top) */}
+          <div className="mb-2 p-2 min-h-10 w-full">
+            {renderCapturedPieces('black')}
+          </div>
+          
           {/* Chess board */}
           {renderBoard()}
+          
+          {/* Captured pieces by white (shown at bottom) */}
+          <div className="mt-2 p-2 min-h-10 w-full">
+            {renderCapturedPieces('white')}
+          </div>
           
           {/* Controls */}
           <div className="mt-4 flex gap-2">
