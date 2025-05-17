@@ -293,7 +293,7 @@ const SimpleChess: React.FC = () => {
         const piece = board[row][col];
         const isSelected = selectedPiece?.row === row && selectedPiece?.col === col;
         
-        const squareStyle = `w-12 h-12 flex items-center justify-center text-3xl cursor-pointer 
+        const squareStyle = `w-14 h-14 flex items-center justify-center cursor-pointer 
                            ${isWhiteSquare ? 'bg-slate-200' : 'bg-slate-500'}
                            ${isSelected ? 'ring-4 ring-blue-500' : ''}`;
         
@@ -304,7 +304,9 @@ const SimpleChess: React.FC = () => {
             onClick={() => handleSquareClick(row, col)}
           >
             {piece && (
-              <span className={`${piece.color === 'white' ? 'text-amber-800' : 'text-black'}`}>
+              <span className={`${piece.color === 'white' 
+                ? 'text-white font-bold text-4xl text-stroke-black' 
+                : 'text-black text-4xl'}`}>
                 {PIECE_SYMBOLS[piece.type][piece.color]}
               </span>
             )}
