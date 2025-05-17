@@ -27,6 +27,8 @@ const Chess2DGame: React.FC = () => {
   const [moveHistory, setMoveHistory] = useState<string[]>([]);
   const [boardFlipped, setBoardFlipped] = useState(false);
   const [lastMove, setLastMove] = useState<{from: string, to: string} | null>(null);
+  const [showPromotionDialog, setShowPromotionDialog] = useState(false);
+  const [pendingPromotion, setPendingPromotion] = useState<{from: string, to: string} | null>(null);
 
   // Define piece images using chess.com URLs
   const PIECE_IMAGES: Record<string, string> = {
@@ -119,16 +121,75 @@ const Chess2DGame: React.FC = () => {
     }
   };
 
+  // Check if move is a pawn promotion
+  const isPromotion = (from: string, to: string): boolean => {
+    const piece = chess.get(from);
+    if (!piece || piece.type !== 'p') return false;
+
+    // Check if pawn is moving to the last rank
+    const toRank = to.charAt(1);
+    return (piece.color === 'w' && toRank === '8') || (piece.color === 'b' && toRank === '1');
+  };
+
+  // Handle promotion piece selection
+  const handlePromotionSelect = (promotionPiece: string) => {
+    if (!pendingPromotion) return;
+
+    try {
+      const { from, to } = pendingPromotion;
+      const move = chess.move({
+        from,
+        to,
+        promotion: promotionPiece
+      });
+
+      if (move) {
+        // Play the appropriate sound
+        if (move.captured) {
+          playSuccess();
+        } else {
+          playHit();
+        }
+        
+        // Update history and last move
+        setMoveHistory([...moveHistory, move.san]);
+        setLastMove({ from, to });
+      }
+    } catch (error) {
+      console.error("Error during promotion:", error);
+    }
+
+    // Close the promotion dialog and reset state
+    setShowPromotionDialog(false);
+    setPendingPromotion(null);
+    setSelectedSquare(null);
+    setValidMoves([]);
+    
+    // Update the board and game status
+    updateBoard();
+    updateGameStatus();
+  };
+
   // Handle square click
   const handleSquareClick = (square: string) => {
+    // If promotion dialog is open, ignore clicks
+    if (showPromotionDialog) return;
+    
     // If a square is already selected
     if (selectedSquare) {
-      // Try to make a move
+      // Check if this is a pawn promotion move
+      if (isPromotion(selectedSquare, square)) {
+        // Store the move for later and show promotion dialog
+        setPendingPromotion({ from: selectedSquare, to: square });
+        setShowPromotionDialog(true);
+        return;
+      }
+      
+      // Try to make a regular move
       try {
         const move = chess.move({
           from: selectedSquare,
-          to: square,
-          promotion: 'q' // Always promote to a queen for simplicity
+          to: square
         });
 
         if (move) {
@@ -321,6 +382,42 @@ const Chess2DGame: React.FC = () => {
     );
   };
 
+  // Render promotion dialog
+  const renderPromotionDialog = () => {
+    if (!showPromotionDialog || !pendingPromotion) return null;
+    
+    const piece = chess.get(pendingPromotion.from);
+    if (!piece) return null;
+    
+    // Determine promotion pieces based on color
+    const pieceColor = piece.color;
+    const promotionPieces = ['q', 'r', 'n', 'b']; // queen, rook, knight, bishop
+    
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white p-4 rounded-lg shadow-lg">
+          <h3 className="text-lg font-bold mb-2">Choose promotion piece</h3>
+          <div className="flex gap-2">
+            {promotionPieces.map(p => (
+              <div 
+                key={p} 
+                className="w-16 h-16 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded cursor-pointer"
+                onClick={() => handlePromotionSelect(p)}
+              >
+                <img
+                  src={PIECE_IMAGES[`${pieceColor}${p.toUpperCase()}`]}
+                  alt={`${pieceColor}${p}`}
+                  className="w-14 h-14 object-contain"
+                  draggable={false}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
       <h1 className="text-3xl font-bold mb-4">Chess Game</h1>
@@ -388,6 +485,9 @@ const Chess2DGame: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* Promotion dialog */}
+      {renderPromotionDialog()}
     </div>
   );
 };
