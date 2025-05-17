@@ -4,6 +4,22 @@ import React, { useState } from 'react';
 type PieceType = 'pawn' | 'knight' | 'bishop' | 'rook' | 'queen' | 'king';
 type PieceColor = 'white' | 'black';
 
+// Define piece images using chess.com URLs
+const PIECE_IMAGES: Record<string, string> = {
+  'white-pawn': 'https://images.chesscomfiles.com/chess-themes/pieces/neo/150/wp.png',
+  'white-knight': 'https://images.chesscomfiles.com/chess-themes/pieces/neo/150/wn.png',
+  'white-bishop': 'https://images.chesscomfiles.com/chess-themes/pieces/neo/150/wb.png',
+  'white-rook': 'https://images.chesscomfiles.com/chess-themes/pieces/neo/150/wr.png',
+  'white-queen': 'https://images.chesscomfiles.com/chess-themes/pieces/neo/150/wq.png',
+  'white-king': 'https://images.chesscomfiles.com/chess-themes/pieces/neo/150/wk.png',
+  'black-pawn': 'https://images.chesscomfiles.com/chess-themes/pieces/neo/150/bp.png',
+  'black-knight': 'https://images.chesscomfiles.com/chess-themes/pieces/neo/150/bn.png',
+  'black-bishop': 'https://images.chesscomfiles.com/chess-themes/pieces/neo/150/bb.png',
+  'black-rook': 'https://images.chesscomfiles.com/chess-themes/pieces/neo/150/br.png',
+  'black-queen': 'https://images.chesscomfiles.com/chess-themes/pieces/neo/150/bq.png',
+  'black-king': 'https://images.chesscomfiles.com/chess-themes/pieces/neo/150/bk.png',
+};
+
 // Define chess piece interface
 interface ChessPiece {
   type: PieceType;
@@ -304,11 +320,11 @@ const SimpleChess: React.FC = () => {
             onClick={() => handleSquareClick(row, col)}
           >
             {piece && (
-              <span className={`chess-piece ${piece.color === 'white' 
-                ? 'white-piece' 
-                : 'black-piece'}`}>
-                {PIECE_SYMBOLS[piece.type][piece.color]}
-              </span>
+              <img 
+                src={PIECE_IMAGES[`${piece.color}-${piece.type}`]} 
+                alt={`${piece.color} ${piece.type}`}
+                className="w-10 h-10 object-contain"
+              />
             )}
           </div>
         );
