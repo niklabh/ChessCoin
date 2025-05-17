@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useAudio } from "./lib/stores/useAudio";
 import "@fontsource/inter";
-import BasicChessGame from "./components/BasicChessGame";
+import SimpleChess from "./components/SimpleChess";
 
 // Main App component
 function App() {
@@ -17,7 +17,7 @@ function App() {
     setSuccessSound(captureSound);
   }, [setHitSound, setSuccessSound]);
 
-  return <BasicChessGame />;
+  return <SimpleChess />;
 }
 
 export default App;
